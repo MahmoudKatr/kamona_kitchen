@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:kamona_kitchen/screen/SectionDetailScreen.dart';
 import 'dart:convert';
 
 class AllSectionList extends StatefulWidget {
@@ -57,7 +58,15 @@ class _AllSectionListState extends State<AllSectionList> {
                       ),
                       trailing: Icon(Icons.arrow_forward_ios),
                       onTap: () {
-                        // Define the action when the list tile is tapped
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SectionDetailScreen(
+                              sectionId: section['section_id'].toString(),  // Convert to string here
+                              sectionName: section['section_name'],
+                            ),
+                          ),
+                        );
                       },
                     ),
                   ),
