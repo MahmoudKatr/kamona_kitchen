@@ -25,7 +25,7 @@ class _AllSectionListState extends State<AllSectionList> {
         sections = data['data']['sections'];
       });
     } else {
-      throw Exception('Failed to load sections');
+      throw Exception('No Foun');
     }
   }
 

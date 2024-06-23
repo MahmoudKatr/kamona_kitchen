@@ -13,27 +13,28 @@ class SectionDetailScreen extends StatefulWidget {
 }
 
 class _SectionDetailScreenState extends State<SectionDetailScreen> {
-  late Map<String, dynamic> sectionData;
-  bool isLoading = true;
+  List<Map<String, dynamic>> menuItems = [];
 
   @override
   void initState() {
     super.initState();
-    fetchSectionData();
+    fetchMenuData();
   }
 
-  Future<void> fetchSectionData() async {
-    final response = await http.get(Uri.parse('http://192.168.56.1:4000/admin/branch/sections/${widget.sectionId}'));
-
+  Future<void> fetchMenuData() async {
+    final response = await http.get(Uri.parse('http://192.168.56.1:4000/admin/branch/general-menu-list'));
+    
     if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final List<Map<String, dynamic>> items = (data['data'] as List)
+          .map((item) => {'id': item['id'], 'name': item['name']})
+          .toList();
       setState(() {
-        sectionData = json.decode(response.body);
-        isLoading = false;
+        menuItems = items;
       });
     } else {
-      throw Exception('Failed to load section data');
+      throw Exception('Failed to load menu data');
     }
-    
   }
 
   @override
@@ -44,22 +45,20 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: isLoading
-            ? Center(child: CircularProgressIndicator())
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Section ID: ${widget.sectionId}',
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Section Name: ${sectionData['sectionName']}',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Section ID: ${widget.sectionId}',
+              style: TextStyle(fontSize: 18),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Section Name: ${widget.sectionName}',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
       ),
     );
   }
