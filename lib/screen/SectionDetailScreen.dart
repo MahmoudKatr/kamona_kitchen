@@ -45,21 +45,30 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   }
 
   Future<void> fetchMenuData() async {
-    final response = await http.get(
-        Uri.parse('http://192.168.56.1:4000/admin/branch/general-menu-list'));
+    try {
+      final response = await http.get(
+          Uri.parse('http://192.168.56.1:4000/admin/branch/general-menu-list'));
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final List<Map<String, dynamic>> items = (data['data'] as List)
-          .map((item) => {'id': item['id'], 'name': item['name']})
-          .toList();
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List<Map<String, dynamic>> items = (data['data'] as List)
+            .map((item) => {'id': item['id'], 'name': item['name']})
+            .toList();
+        if (mounted) {
+          setState(() {
+            menuItems = items;
+          });
+        }
+      } else {
+        throw Exception('Failed to load menu data');
+      }
+    } catch (e) {
+      print('Error fetching menu data: $e');
       if (mounted) {
         setState(() {
-          menuItems = items;
+          menuItems = [];
         });
       }
-    } else {
-      throw Exception('Failed to load menu data');
     }
   }
 
@@ -98,7 +107,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
         }
       }
     } catch (e) {
-      print('Error: $e');
+      print('Error fetching order data: $e');
       if (mounted) {
         setState(() {
           orderItems = [];
@@ -142,7 +151,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
         }
       }
     } catch (e) {
-      print('Error: $e');
+      print('Error fetching confirmed order data: $e');
       if (mounted) {
         setState(() {
           confirmedOrderItems = [];
@@ -203,25 +212,29 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
       String itemId, String newStatus) async {
     final url =
         Uri.parse('http://192.168.56.1:4000/admin/menu/changeOrderItemStatus');
-    final response = await http.patch(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        'orderId': orderId,
-        'customerId': customerId,
-        'itemId': itemId,
-        'newStatus': newStatus,
-      }),
-    );
+    try {
+      final response = await http.patch(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'orderId': orderId,
+          'customerId': customerId,
+          'itemId': itemId,
+          'newStatus': newStatus,
+        }),
+      );
 
-    if (response.statusCode == 200) {
-      print('Status updated successfully');
-      fetchData(); // Refresh data after update
-    } else {
-      print('Failed to update status - Status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      if (response.statusCode == 200) {
+        print('Status updated successfully');
+        fetchData(); // Refresh data after update
+      } else {
+        print('Failed to update status - Status code: ${response.statusCode}');
+        print('Response body: ${response.body}');
+      }
+    } catch (e) {
+      print('Error updating status: $e');
     }
   }
 
@@ -263,8 +276,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
                       itemCount: mergedItems.length,
                       itemBuilder: (context, index) {
                         final item = mergedItems[index];
-                        final quantity = item['quantity'] ??
-                            0; // Default to 0 if quantity is null
+                        final quantity = item['quantity'] ?? 0; // Default to 0 if quantity is null
                         final buttonColor = item['new_status'] == 'confirmed'
                             ? Colors.orange
                             : item['new_status'] == 'completed'
