@@ -43,16 +43,19 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   }
 
   Future<void> fetchMenuData() async {
-    final response = await http.get(Uri.parse('http://192.168.56.1:4000/admin/branch/general-menu-list'));
+    final response = await http.get(
+        Uri.parse('http://192.168.56.1:4000/admin/branch/general-menu-list'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final List<Map<String, dynamic>> items = (data['data'] as List)
           .map((item) => {'id': item['id'], 'name': item['name']})
           .toList();
-      setState(() {
-        menuItems = items;
-      });
+      if (mounted) {
+        setState(() {
+          menuItems = items;
+        });
+      }
     } else {
       throw Exception('Failed to load menu data');
     }
@@ -60,7 +63,8 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
 
   Future<void> fetchOrderData() async {
     try {
-      final response = await http.get(Uri.parse('http://192.168.56.1:4000/user/order/orderItemsBySection/${widget.sectionId}/2/pending'));
+      final response = await http.get(Uri.parse(
+          'http://192.168.56.1:4000/user/order/orderItemsBySection/${widget.sectionId}/2/pending'));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -74,15 +78,28 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
                   'quantity': item['fn_quantity'],
                 })
             .toList();
-        setState(() {
-          orderItems = items;
-        });
+        if (mounted) {
+          setState(() {
+            orderItems = items;
+          });
+        }
       } else {
-        print('Failed to load order data - Status code: ${response.statusCode}');
+        print(
+            'Failed to load order data - Status code: ${response.statusCode}');
         print('Response body: ${response.body}');
+        if (mounted) {
+          setState(() {
+            orderItems = [];
+          });
+        }
       }
     } catch (e) {
       print('Error: $e');
+      if (mounted) {
+        setState(() {
+          orderItems = [];
+        });
+      }
     }
   }
 
@@ -90,7 +107,9 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
     final List<Map<String, dynamic>> tempMergedItems = [];
 
     for (var orderItem in orderItems) {
-      final menuItem = menuItems.firstWhere((menuItem) => menuItem['id'] == orderItem['item_id'], orElse: () => {});
+      final menuItem = menuItems.firstWhere(
+          (menuItem) => menuItem['id'] == orderItem['item_id'],
+          orElse: () => {});
       if (menuItem.isNotEmpty) {
         tempMergedItems.add({
           'order_id': orderItem['order_id'],
@@ -104,13 +123,17 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
       }
     }
 
-    setState(() {
-      mergedItems = tempMergedItems;
-    });
+    if (mounted) {
+      setState(() {
+        mergedItems = tempMergedItems;
+      });
+    }
   }
 
-  Future<void> changeOrderItemStatus(String orderId, String customerId, String itemId, String newStatus) async {
-    final url = Uri.parse('http://192.168.56.1:4000/admin/menu/changeOrderItemStatus');
+  Future<void> changeOrderItemStatus(String orderId, String customerId,
+      String itemId, String newStatus) async {
+    final url =
+        Uri.parse('http://192.168.56.1:4000/admin/menu/changeOrderItemStatus');
     final response = await http.patch(
       url,
       headers: <String, String>{
@@ -137,7 +160,8 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Section Detail', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        title: Text('Section Detail',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.teal,
       ),
       body: Padding(
@@ -152,53 +176,75 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
             SizedBox(height: 10),
             Text(
               'Section Name: ${widget.sectionName}',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.teal[800]),
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.teal[800]),
             ),
             SizedBox(height: 20),
             Expanded(
-              child: ListView.builder(
-                itemCount: mergedItems.length,
-                itemBuilder: (context, index) {
-                  final item = mergedItems[index];
-                  return Card(
-                    elevation: 5,
-                    margin: EdgeInsets.symmetric(vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: ListTile(
-                        title: Text(
-                          item['item_name'],
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Order ID: ${item['order_id']}', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
-                            Text('Quantity: ${item['quantity']}', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
-                          ],
-                        ),
-                        trailing: TextButton(
-                          onPressed: () {
-                            changeOrderItemStatus(
-                              item['order_id'].toString(),
-                              item['customer_id'].toString(),
-                              item['item_id'].toString(),
-                              'confirmed',
-                            );
-                          },
-                          child: Text(
-                            item['item_status'],
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.red[400]),
-                          ),
-                        ),
+              child: mergedItems.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No orders available',
+                        style: TextStyle(fontSize: 18, color: Colors.grey[700]),
                       ),
+                    )
+                  : ListView.builder(
+                      itemCount: mergedItems.length,
+                      itemBuilder: (context, index) {
+                        final item = mergedItems[index];
+                        final quantity = item['quantity'] ??
+                            0; // Default to 0 if quantity is null
+                        return Card(
+                          elevation: 5,
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: ListTile(
+                              title: Text(
+                                item['item_name'],
+                                style: TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.w500),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Order ID: ${item['order_id']}',
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey[600])),
+                                  Text('Quantity: $quantity',
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey[600])),
+                                ],
+                              ),
+                              trailing: TextButton(
+                                onPressed: () {
+                                  changeOrderItemStatus(
+                                    item['order_id'].toString(),
+                                    item['customer_id'].toString(),
+                                    item['item_id'].toString(),
+                                    'confirmed',
+                                  );
+                                },
+                                child: Text(
+                                  'CONFIRMED',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.red[400]),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),
