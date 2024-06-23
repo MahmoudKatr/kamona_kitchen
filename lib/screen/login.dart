@@ -18,18 +18,30 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _login() {
-    if (_emailController.text == "" &&
-        _passwordController.text == "") {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => AllSectionList()),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Invalid email or password')),
-      );
-    }
+  String email = _emailController.text;
+  String password = _passwordController.text;
+  int branchNumber;
+
+  if (email == "branch1@example.com" && password == "password1") {
+    branchNumber = 1;
+  } else if (email == "branch2@example.com" && password == "password2") {
+    branchNumber = 2;
+  } else if (email == "branch3@example.com" && password == "password3") {
+    branchNumber = 3;
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Invalid email or password')),
+    );
+    return; // Stop further execution if login is invalid
   }
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => AllSectionList(branchNumber: branchNumber),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {

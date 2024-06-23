@@ -4,6 +4,10 @@ import 'package:kamona_kitchen/screen/SectionDetailScreen.dart';
 import 'dart:convert';
 
 class AllSectionList extends StatefulWidget {
+  final int branchNumber;
+
+  AllSectionList({required this.branchNumber}); // Update constructor to accept userNumber
+
   @override
   _AllSectionListState createState() => _AllSectionListState();
 }
@@ -17,62 +21,62 @@ class _AllSectionListState extends State<AllSectionList> {
     fetchSections();
   }
 
-  Future<void> fetchSections() async {
-    final response = await http.get(Uri.parse('http://192.168.56.1:4000/admin/menu/sectionsList'));
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      setState(() {
-        sections = data['data']['sections'];
-      });
-    } else {
-      throw Exception('No Foun');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text('All Section List'),
-        centerTitle: true,
-      ),
-      body: sections.isEmpty
-          ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: sections.length,
-              itemBuilder: (context, index) {
-                final section = sections[index];
-                return Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15.0),
-                    ),
-                    elevation: 4,
-                    child: ListTile(
-                      leading: Icon(Icons.list),
-                      title: Text(
-                        section['section_name'],
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      trailing: Icon(Icons.arrow_forward_ios),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SectionDetailScreen(
-                              sectionId: section['section_id'].toString(),  // Convert to string here
-                              sectionName: section['section_name'],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                );
-              },
-            ),
-    );
+Future<void> fetchSections() async {
+  final response = await http.get(Uri.parse('http://192.168.56.1:4000/admin/branch/sections/${widget.branchNumber}'));
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    setState(() {
+      sections = data['data']['sections'];
+    });
+  } else {
+    throw Exception('Failed to load sections');
   }
 }
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      automaticallyImplyLeading: false,
+      title: Text('All Section List (Branch ${widget.branchNumber})'), // Display branch number
+      centerTitle: true,
+    ),
+    body: sections.isEmpty
+        ? Center(child: CircularProgressIndicator())
+        : ListView.builder(
+            itemCount: sections.length,
+            itemBuilder: (context, index) {
+              final section = sections[index];
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15.0),
+                  ),
+                  elevation: 4,
+                  child: ListTile(
+                    leading: Icon(Icons.list),
+                    title: Text(
+                      section['name'],
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    trailing: Icon(Icons.arrow_forward_ios),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SectionDetailScreen(
+                            sectionId: section['id'].toString(),  // Convert to string here
+                            sectionName: section['name'],
+                            branchNumber: widget.branchNumber
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+  );
+}}

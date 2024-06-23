@@ -6,8 +6,10 @@ import 'dart:async';
 class SectionDetailScreen extends StatefulWidget {
   final String sectionId;
   final String sectionName;
+  final int branchNumber; // Add this line
 
-  SectionDetailScreen({required this.sectionId, required this.sectionName});
+
+  SectionDetailScreen({required this.sectionId, required this.sectionName,required this.branchNumber});
 
   @override
   _SectionDetailScreenState createState() => _SectionDetailScreenState();
@@ -75,7 +77,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   Future<void> fetchOrderData() async {
     try {
       final response = await http.get(Uri.parse(
-          'http://192.168.56.1:4000/user/order/orderItemsBySection/${widget.sectionId}/2/pending'));
+          'http://192.168.56.1:4000/user/order/orderItemsBySection/${widget.sectionId}/${widget.branchNumber}/pending'));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -119,7 +121,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   Future<void> fetchConfirmedOrderData() async {
     try {
       final response = await http.get(Uri.parse(
-          'http://192.168.56.1:4000/user/order/orderItemsBySection/${widget.sectionId}/2/confirmed'));
+          'http://192.168.56.1:4000/user/order/orderItemsBySection/${widget.sectionId}/${widget.branchNumber}/confirmed'));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -258,6 +260,14 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
             SizedBox(height: 10),
             Text(
               'Section Name: ${widget.sectionName}',
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.teal[800]),
+            ),
+            SizedBox(height: 20),
+                        Text(
+              'Branch: ${widget.branchNumber}',
               style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
