@@ -16,6 +16,7 @@ class SectionDetailScreen extends StatefulWidget {
 class _SectionDetailScreenState extends State<SectionDetailScreen> {
   List<Map<String, dynamic>> menuItems = [];
   List<Map<String, dynamic>> orderItems = [];
+  List<Map<String, dynamic>> confirmedOrderItems = [];
   List<Map<String, dynamic>> mergedItems = [];
   Timer? timer;
 
@@ -39,6 +40,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   Future<void> fetchData() async {
     await fetchMenuData();
     await fetchOrderData();
+    await fetchConfirmedOrderData();
     mergeData();
   }
 
@@ -76,6 +78,8 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
                   'section_id': item['fn_section_id'],
                   'item_status': item['fn_item_status'],
                   'quantity': item['fn_quantity'],
+                  'button_text': 'CONFIRMED', // New field
+                  'new_status': 'confirmed',  // New field
                 })
             .toList();
         if (mounted) {
@@ -103,6 +107,50 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
     }
   }
 
+  Future<void> fetchConfirmedOrderData() async {
+    try {
+      final response = await http.get(Uri.parse(
+          'http://192.168.56.1:4000/user/order/orderItemsBySection/${widget.sectionId}/2/confirmed'));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List<Map<String, dynamic>> items = (data['data'] as List)
+            .map((item) => {
+                  'order_id': item['fn_order_id'],
+                  'customer_id': item['fn_customer_id'],
+                  'item_id': item['fn_item_id'],
+                  'section_id': item['fn_section_id'],
+                  'item_status': item['fn_item_status'],
+                  'quantity': item['fn_quantity'],
+                  'button_text': 'COMPLETED', // New field
+                  'new_status': 'completed', // New field
+                })
+            .toList();
+        if (mounted) {
+          setState(() {
+            confirmedOrderItems = items;
+          });
+        }
+      } else {
+        print(
+            'Failed to load confirmed order data - Status code: ${response.statusCode}');
+        print('Response body: ${response.body}');
+        if (mounted) {
+          setState(() {
+            confirmedOrderItems = [];
+          });
+        }
+      }
+    } catch (e) {
+      print('Error: $e');
+      if (mounted) {
+        setState(() {
+          confirmedOrderItems = [];
+        });
+      }
+    }
+  }
+
   void mergeData() {
     final List<Map<String, dynamic>> tempMergedItems = [];
 
@@ -119,6 +167,27 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
           'item_status': orderItem['item_status'],
           'item_name': menuItem['name'],
           'quantity': orderItem['quantity'],
+          'button_text': orderItem['button_text'], // Pass button text
+          'new_status': orderItem['new_status'],   // Pass new status
+        });
+      }
+    }
+
+    for (var confirmedItem in confirmedOrderItems) {
+      final menuItem = menuItems.firstWhere(
+          (menuItem) => menuItem['id'] == confirmedItem['item_id'],
+          orElse: () => {});
+      if (menuItem.isNotEmpty) {
+        tempMergedItems.add({
+          'order_id': confirmedItem['order_id'],
+          'customer_id': confirmedItem['customer_id'],
+          'item_id': confirmedItem['item_id'],
+          'section_id': confirmedItem['section_id'],
+          'item_status': confirmedItem['item_status'],
+          'item_name': menuItem['name'],
+          'quantity': confirmedItem['quantity'],
+          'button_text': confirmedItem['button_text'], // Pass button text
+          'new_status': confirmedItem['new_status'],   // Pass new status
         });
       }
     }
@@ -196,6 +265,12 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
                         final item = mergedItems[index];
                         final quantity = item['quantity'] ??
                             0; // Default to 0 if quantity is null
+                        final buttonColor = item['new_status'] == 'confirmed'
+                            ? Colors.orange
+                            : item['new_status'] == 'completed'
+                                ? Colors.green
+                                : Colors.grey; // Default color
+
                         return Card(
                           elevation: 5,
                           margin: EdgeInsets.symmetric(vertical: 8),
@@ -229,15 +304,15 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
                                     item['order_id'].toString(),
                                     item['customer_id'].toString(),
                                     item['item_id'].toString(),
-                                    'confirmed',
+                                    item['new_status'],
                                   );
                                 },
                                 child: Text(
-                                  'CONFIRMED',
+                                  item['button_text'],
                                   style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.red[400]),
+                                      color: buttonColor),
                                 ),
                               ),
                             ),
