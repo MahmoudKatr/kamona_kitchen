@@ -33,7 +33,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   }
 
   void startPolling() {
-    timer = Timer.periodic(Duration(seconds: 10), (Timer t) => fetchData());
+    timer = Timer.periodic(Duration(seconds: 1), (Timer t) => fetchData());
   }
 
   Future<void> fetchData() async {
@@ -58,32 +58,33 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
     }
   }
 
-Future<void> fetchOrderData() async {
-  try {
-    final response = await http.get(Uri.parse('http://192.168.56.1:4000/user/order/orderItemsBySection/${widget.sectionId}/pending'));
+  Future<void> fetchOrderData() async {
+    try {
+      final response = await http.get(Uri.parse('http://192.168.56.1:4000/user/order/orderItemsBySection/${widget.sectionId}/2/pending'));
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final List<Map<String, dynamic>> items = (data['data'] as List)
-          .map((item) => {
-                'order_id': item['order_id'],
-                'customer_id': item['customer_id'],
-                'item_id': item['item_id'],
-                'section_id': item['section_id'],
-                'item_status': item['item_status']
-              })
-          .toList();
-      setState(() {
-        orderItems = items;
-      });
-    } else {
-      print('Failed to load order data - Status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List<Map<String, dynamic>> items = (data['data'] as List)
+            .map((item) => {
+                  'order_id': item['fn_order_id'],
+                  'customer_id': item['fn_customer_id'],
+                  'item_id': item['fn_item_id'],
+                  'section_id': item['fn_section_id'],
+                  'item_status': item['fn_item_status'],
+                  'quantity': item['fn_quantity'],
+                })
+            .toList();
+        setState(() {
+          orderItems = items;
+        });
+      } else {
+        print('Failed to load order data - Status code: ${response.statusCode}');
+        print('Response body: ${response.body}');
+      }
+    } catch (e) {
+      print('Error: $e');
     }
-  } catch (e) {
-    print('Error: $e');
   }
-}
 
   void mergeData() {
     final List<Map<String, dynamic>> tempMergedItems = [];
@@ -97,7 +98,8 @@ Future<void> fetchOrderData() async {
           'item_id': orderItem['item_id'],
           'section_id': orderItem['section_id'],
           'item_status': orderItem['item_status'],
-          'item_name': menuItem['name']
+          'item_name': menuItem['name'],
+          'quantity': orderItem['quantity'],
         });
       }
     }
@@ -105,6 +107,30 @@ Future<void> fetchOrderData() async {
     setState(() {
       mergedItems = tempMergedItems;
     });
+  }
+
+  Future<void> changeOrderItemStatus(String orderId, String customerId, String itemId, String newStatus) async {
+    final url = Uri.parse('http://192.168.56.1:4000/admin/menu/changeOrderItemStatus');
+    final response = await http.patch(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'orderId': orderId,
+        'customerId': customerId,
+        'itemId': itemId,
+        'newStatus': newStatus,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print('Status updated successfully');
+      fetchData(); // Refresh data after update
+    } else {
+      print('Failed to update status - Status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+    }
   }
 
   @override
@@ -147,10 +173,26 @@ Future<void> fetchOrderData() async {
                           item['item_name'],
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                         ),
-                        subtitle: Text('Order ID: ${item['order_id']}', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
-                        trailing: Text(
-                          item['item_status'],
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.red[400]),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Order ID: ${item['order_id']}', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+                            Text('Quantity: ${item['quantity']}', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+                          ],
+                        ),
+                        trailing: TextButton(
+                          onPressed: () {
+                            changeOrderItemStatus(
+                              item['order_id'].toString(),
+                              item['customer_id'].toString(),
+                              item['item_id'].toString(),
+                              'confirmed',
+                            );
+                          },
+                          child: Text(
+                            item['item_status'],
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.red[400]),
+                          ),
                         ),
                       ),
                     ),

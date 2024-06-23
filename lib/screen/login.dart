@@ -18,8 +18,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _login() {
-    if (_emailController.text == "test@example.com" &&
-        _passwordController.text == "password123") {
+    if (_emailController.text == "" &&
+        _passwordController.text == "") {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => AllSectionList()),
