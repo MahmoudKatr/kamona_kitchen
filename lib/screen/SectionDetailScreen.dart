@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 
 class SectionDetailScreen extends StatefulWidget {
   final String sectionId;
@@ -16,11 +17,23 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   List<Map<String, dynamic>> menuItems = [];
   List<Map<String, dynamic>> orderItems = [];
   List<Map<String, dynamic>> mergedItems = [];
+  Timer? timer;
 
   @override
   void initState() {
     super.initState();
     fetchData();
+    startPolling();
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  void startPolling() {
+    timer = Timer.periodic(Duration(seconds: 10), (Timer t) => fetchData());
   }
 
   Future<void> fetchData() async {
@@ -31,7 +44,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
 
   Future<void> fetchMenuData() async {
     final response = await http.get(Uri.parse('http://192.168.56.1:4000/admin/branch/general-menu-list'));
-    
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final List<Map<String, dynamic>> items = (data['data'] as List)
@@ -45,27 +58,32 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
     }
   }
 
-  Future<void> fetchOrderData() async {
+Future<void> fetchOrderData() async {
+  try {
     final response = await http.get(Uri.parse('http://192.168.56.1:4000/user/order/orderItemsBySection/${widget.sectionId}/pending'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final List<Map<String, dynamic>> items = (data['data'] as List)
           .map((item) => {
-            'order_id': item['order_id'],
-            'customer_id': item['customer_id'],
-            'item_id': item['item_id'],
-            'section_id': item['section_id'],
-            'item_status': item['item_status']
-          })
+                'order_id': item['order_id'],
+                'customer_id': item['customer_id'],
+                'item_id': item['item_id'],
+                'section_id': item['section_id'],
+                'item_status': item['item_status']
+              })
           .toList();
       setState(() {
         orderItems = items;
       });
     } else {
-      throw Exception('Failed to load order data');
+      print('Failed to load order data - Status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
     }
+  } catch (e) {
+    print('Error: $e');
   }
+}
 
   void mergeData() {
     final List<Map<String, dynamic>> tempMergedItems = [];
