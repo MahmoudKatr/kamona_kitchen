@@ -49,7 +49,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   Future<void> fetchMenuData() async {
     try {
       final response = await http.get(
-          Uri.parse('https://54.235.40.102.nip.io/admin/branch/general-menu-list'));
+          Uri.parse('http://192.168.56.1:4000/admin/branch/general-menu-list'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List<Map<String, dynamic>> items = (data['data'] as List)
@@ -76,7 +76,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   Future<void> fetchOrderData() async {
     try {
       final response = await http.get(Uri.parse(
-          'https://54.235.40.102.nip.io/user/order/orderItemsBySection/${widget.sectionId}/${widget.branchNumber}/pending'));
+          'http://192.168.56.1:4000/user/order/orderItemsBySection/${widget.sectionId}/${widget.branchNumber}/pending'));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -120,7 +120,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   Future<void> fetchConfirmedOrderData() async {
     try {
       final response = await http.get(Uri.parse(
-          'https://54.235.40.102.nip.io/user/order/orderItemsBySection/${widget.sectionId}/${widget.branchNumber}/confirmed'));
+          'http://192.168.56.1:4000/user/order/orderItemsBySection/${widget.sectionId}/${widget.branchNumber}/confirmed'));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -212,7 +212,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   Future<void> changeOrderItemStatus(String orderId, String customerId,
       String itemId, String newStatus) async {
     final url =
-        Uri.parse('https://54.235.40.102.nip.io/admin/menu/changeOrderItemStatus');
+        Uri.parse('http://192.168.56.1:4000/admin/menu/changeOrderItemStatus');
     try {
       final response = await http.patch(
         url,
@@ -252,21 +252,9 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Section ID: ${widget.sectionId}',
-              style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-            ),
             SizedBox(height: 10),
             Text(
               'Section Name: ${widget.sectionName}',
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.teal[800]),
-            ),
-            SizedBox(height: 20),
-                        Text(
-              'Branch: ${widget.branchNumber}',
               style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -316,6 +304,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
                                   Text('Quantity: $quantity',
                                       style: TextStyle(
                                           fontSize: 16,
+                                          fontWeight: FontWeight.bold,
                                           color: Colors.grey[600])),
                                 ],
                               ),
