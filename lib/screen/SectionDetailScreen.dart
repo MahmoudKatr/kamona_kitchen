@@ -36,7 +36,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   }
 
   void startPolling() {
-    timer = Timer.periodic(Duration(seconds: 1), (Timer t) => fetchData());
+    timer = Timer.periodic(Duration(seconds: 20), (Timer t) => fetchData());
   }
 
   Future<void> fetchData() async {
@@ -49,8 +49,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   Future<void> fetchMenuData() async {
     try {
       final response = await http.get(
-          Uri.parse('http://192.168.56.1:4000/admin/branch/general-menu-list'));
-
+          Uri.parse('https://54.235.40.102.nip.io/admin/branch/general-menu-list'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List<Map<String, dynamic>> items = (data['data'] as List)
@@ -77,7 +76,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   Future<void> fetchOrderData() async {
     try {
       final response = await http.get(Uri.parse(
-          'http://192.168.56.1:4000/user/order/orderItemsBySection/${widget.sectionId}/${widget.branchNumber}/pending'));
+          'https://54.235.40.102.nip.io/user/order/orderItemsBySection/${widget.sectionId}/${widget.branchNumber}/pending'));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -121,7 +120,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   Future<void> fetchConfirmedOrderData() async {
     try {
       final response = await http.get(Uri.parse(
-          'http://192.168.56.1:4000/user/order/orderItemsBySection/${widget.sectionId}/${widget.branchNumber}/confirmed'));
+          'https://54.235.40.102.nip.io/user/order/orderItemsBySection/${widget.sectionId}/${widget.branchNumber}/confirmed'));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -213,7 +212,7 @@ class _SectionDetailScreenState extends State<SectionDetailScreen> {
   Future<void> changeOrderItemStatus(String orderId, String customerId,
       String itemId, String newStatus) async {
     final url =
-        Uri.parse('http://192.168.56.1:4000/admin/menu/changeOrderItemStatus');
+        Uri.parse('https://54.235.40.102.nip.io/admin/menu/changeOrderItemStatus');
     try {
       final response = await http.patch(
         url,

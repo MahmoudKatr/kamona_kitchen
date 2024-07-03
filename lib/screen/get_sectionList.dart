@@ -22,7 +22,7 @@ class _AllSectionListState extends State<AllSectionList> {
   }
 
 Future<void> fetchSections() async {
-  final response = await http.get(Uri.parse('http://192.168.56.1:4000/admin/branch/sections/${widget.branchNumber}'));
+  final response = await http.get(Uri.parse('https://54.235.40.102.nip.io/admin/branch/sections/${widget.branchNumber}'));
   if (response.statusCode == 200) {
     final data = json.decode(response.body);
     setState(() {
